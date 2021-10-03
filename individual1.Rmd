@@ -1,0 +1,96 @@
+---
+title: "DS202_lab3_Abagail_Ohmer"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+dat <- readxl::read_xls('GSS.xls')
+str(dat)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+dat <- dat %>% rename("Ageofrespondent" = "Age of respondent")
+dat <- dat %>% mutate(Ageofrespondent = as.numeric(Ageofrespondent))
+dat <- dat %>% rename("HigestSchoolComplete" = "Highest year of school completed")
+dat <- dat %>% mutate(HigestSchoolComplete = as.numeric(HigestSchoolComplete))
+dat <- dat %>% rename("Maritalstatus" = "Marital status")
+dat <- dat %>% rename("Generalhappy" = "General happiness")
+dat <- dat %>% rename("Politicalparty" = "Political party affiliation")
+dat <- dat %>% rename("Sex" = "Respondents sex")
+dat <- dat %>% rename("Age" = "Ageofrespondent")
+```
+
+```{r}
+#1 Find the average years of education for the respondents with each marital status. Arrange your output in a meaningful order and print. Describe any patterns you find.
+
+dat1 <- dat %>% select( Maritalstatus, HigestSchoolComplete)
+dat1 <- dat1 %>% filter(!Maritalstatus %in% c('No answer'))
+var <- dat1 %>% group_by(Maritalstatus) %>% summarize(school = mean(HigestSchoolComplete, na.rm=TRUE)) %>% arrange(school)
+var
+ggplot(var, aes(x = Maritalstatus, weight = school)) + geom_bar()
+```
+The widowed have the least years of highest school completion, while the never married have the most completed years of school.
+
+```{r}
+#2 Create a single data frame containing records for the better educated respondents with each marital status. A “better educated” respondent is someone who has strictly more years of education than the average among those with the same marital status. Print the structure of the data frame.
+
+dat2 <- dat %>% select( Maritalstatus, HigestSchoolComplete)
+dat2 <- dat2 %>% group_by(Maritalstatus) %>% filter(HigestSchoolComplete > mean(HigestSchoolComplete, na.rm = TRUE))
+str(dat2)
+```
+
+
+```{r}
+#3 How is the happiness of a respondent related to his/her marriage status? Define that a person is happy if the response to question is “Very happy” or “Pretty happy”.
+
+dat3 <- dat %>% select( Maritalstatus, Generalhappy)
+var3 <- dat3 %>% filter(!Generalhappy %in% c('Very happy', 'Pretty happy'))
+dat3 <- dat3 %>% filter(Generalhappy %in% c('Very happy', 'Pretty happy'))
+table(dat3$Generalhappy, dat3$Maritalstatus)
+table(var3$Generalhappy, var3$Maritalstatus)
+ggplot(dat3, aes(x = Generalhappy, fill = Maritalstatus)) + geom_bar(position = 'dodge')
+ggplot(var3, aes(x = Generalhappy, fill = Maritalstatus)) + geom_bar(position = 'dodge')
+```
+From the two graphs we can see that in each martial status, more people are happy, than unhappy. The majority of peope who are happy are married. 
+
+
+```{r}
+#4 Does party affiliation affect the relationship you found in the last question? Explore an interesting question (not covered by the previous questions), and answer the question using the GSS data.
+
+dat4 <- dat %>% select(Maritalstatus, Generalhappy, Politicalparty)
+dat4 <- dat4 %>% filter (! (Maritalstatus == 'No answer' | Politicalparty == "Don't know"))
+var4 <- dat4 %>% filter(!(Generalhappy == 'Very happy' |  Generalhappy == 'Pretty happy'))
+dat4 <- dat4 %>% filter((Generalhappy == 'Very happy' | Generalhappy == 'Pretty happy'))
+ggplot(dat4, aes(x = Generalhappy, fill = Maritalstatus, width = Politicalparty)) + geom_bar(position = 'dodge')
+ggplot(var4, aes(x = Generalhappy, fill = Maritalstatus, width = Politicalparty)) + geom_bar(position = 'dodge')
+table(var4)
+table(dat4)
+```
+Political party affiliation doesn't affect that more people in general are happier than sad, regardless of marital status. And the majority of people who are happy are married in each political party affiliation. 
+
+```{r}
+#5 Explore an interesting question (not covered by the previous questions), and answer the question using the GSS data.
+
+dat5 <- dat %>% select(Age, Sex, Politicalparty)
+dat5 <- dat5 %>% filter ((!Politicalparty == "Don't know") & Age >= 18 & Age <= 20)
+dat5 <- dat5 %>% group_by(Age)
+ggplot(dat5, aes(x = Sex, fill = Politicalparty)) + geom_bar(position = 'dodge')
+table(dat5)
+ggplot(dat5, aes(x = Age, fill = Politicalparty, width = Sex)) + geom_bar(position = 'dodge')
+
+ggplot(dat5, aes(x = Age, fill = Politicalparty)) + geom_bar(position = 'dodge')
+
+```
+
+I explored the relationship between Age, sex, and political party affiliation. Specifically, people between the ages of 18 and 20. In the first graph We see the relationship between sex and political party affiliation. It seems that Females have more people who are independent and independent near dem/rep. It also shows that more Males are strong democrat or strong republicans. 
+
+In the second graph, We can see the comparison of political party affiliation, age between 18 and 20, and sex (females in the first column, then males). The graphs for each age group, keep the proportions for each political party affiliation the same, but the number of people asked for each age group increases. We can also see that almost every party affiliation grows as the age increases, but between the ages of 19 and 20, no answer decreases for females and increases for males. 
+
+The last graph looks at the relationship between ages 18 -  20 and political party affiliation, regardless of sex. We can see that more people were asked as age increases, and that almost every party affiliation increases as age increases.
+
+
